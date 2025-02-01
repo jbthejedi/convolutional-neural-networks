@@ -35,9 +35,9 @@ class MyConv2d(nn.Module):
         
         # optional bias
         if config.bias:
-            config.bias = nn.Parameter(torch.zeros(config.out_channels))
+            self.bias = nn.Parameter(torch.zeros(config.out_channels))
         else:
-            config.bias = None
+            self.bias = None
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -59,7 +59,6 @@ class MyConv2d(nn.Module):
             padding=self.config.padding,
             stride=self.config.stride
         )
-        # x = x.transpose(1, 2) # (B, L, C*k*k) is more intuitive to me
         
         # -----------------------------
         # 2) Multiply + sum over patch
@@ -85,9 +84,9 @@ class MyConv2d(nn.Module):
         # --------------------------------
         # 3) Add bias (if it exists)
         # --------------------------------
-        if self.config.bias is not None:
+        if self.bias is not None:
             # broadcast bias over the second dimension
-            out += self.config.bias.view(1, -1, 1)
+            out += self.bias.view(1, -1, 1) # (1, out_channels, 1)
         
         # -----------------------------
         # 4) Reshape to (B, out_channels, H_out, W_out)
