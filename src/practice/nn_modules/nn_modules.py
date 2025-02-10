@@ -121,11 +121,68 @@ class MyLayerNorm(nn.Module):
         return x_hat
 
 class MyBatchNorm2d(nn.Module):
-    def __init__(self):
-        pass
+    def __init__(
+        self, 
+        num_features,
+        eps=1e-5,
+        momentum=0.1,
+        affine=True,
+        track_running_stats=True
+     ):
+        super().__init__()
+        self.num_features = num_features
+        self.eps = eps
+        self.momentum = momentum
+        self.affine = affine
+        self.track_running_stats = track_running_stats 
+
+        if self.affine:
+            self.gamma = nn.Parameter(torch.ones(num_features))
+            self.beta = nn.Parameter(torch.zeros(num_features))
+        else:
+            self.register_parameter('gamma', None)
+            self.register_parameter('beta', None)
+
+        if self.track_running_stats:
+            self.register_buffer('running_mean', torch.zeros(num_features))
+            self.register_buffer('running_var', torch.ones(num_features))
+        else:
+            self.running_mean = None
+            self.running_var = None
 
     def forward(self, x):
-        pass
+        if self.training:
+            batch_mean = x.mean(dim=[0,2,3])
+            batch_var = x.var(dim=[0,2,3], unbiased=False)
+
+            if self.track_running_stats:
+                self.running_mean = (
+                    (1 - self.momentum) * self.running_mean
+                    + self.momentum * batch_mean
+                )
+                self.running_var = (
+                    (1 - self.momentum) * self.running_var
+                    + self.momentum * batch_var
+                )
+            mean = batch_mean
+            var = batch_var
+        else:
+            mean = self.running_mean
+            var = self.running_var
+
+        x_norm = (
+            (x - mean[None, :, None, None]) /
+            torch.sqrt(var[None, :, None, None] + self.eps)
+        )
+        if self.affine:
+            x_norm = (
+                self.gamma[None, :, None, None]
+                * x_norm + self.beta[None, :, None, None]
+            )
+
+        return x
+
+
 
 def test_modules():
     # -----------
@@ -192,6 +249,23 @@ def test_modules():
     print(f"out_tensor.shape {out_tensor.shape}")
 
     assert out_tensor.shape == (b, t, d), f"Failed. output.shape {out_tensor.shape}"
+
+    # -----------
+    # MyBatchNorm2d
+    # -----------
+    module_name = "MyBatchNorm2d"
+    print(f"Testing {module_name}")
+    # b=batch, c=num_channels_in
+    b, c, h_in, w_in = 4, 8, 32, 32
+    in_tensor = torch.ones(b, c, h_in, w_in)
+    module = MyBatchNorm2d(
+        num_features=c,
+        # track_running_stats,
+    )
+    out_tensor = module(in_tensor)
+    print(f"out_tensor.shape {out_tensor.shape}")
+
+    assert out_tensor.shape == (b, c, h_in, w_in), f"Failed. output.shape {out_tensor.shape}"
 
 def main():
     test_modules()
