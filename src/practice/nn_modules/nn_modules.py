@@ -63,27 +63,6 @@ class MyMaxPool2d(nn.Module):
         return out
 
 class MyAvgPool2d(nn.Module):
-    def __init__(self, kernel_size, stride, padding):
-        super().__init__()
-        self.kernel_size = kernel_size
-        self.stride      = stride
-        self.padding     = padding
-
-    def forward(self, x):
-        b, c_in, h_in, w_in = x.shape
-        k, s, p = self.kernel_size, self.stride, self.padding
-
-        # x_unfold.shape => (b, c_in*k*k, L), where L = h_out * w_out
-        x_unfold = F.unfold(x, kernel_size=k, stride=s, padding=p)
-        x_unfold = x_unfold.view(b, c_in, k*k, -1)
-        x_max, _ = x_unfold.max(dim=2)
-        h_out = (h_in + 2*p - k) // s + 1
-        w_out = (w_in + 2*p - k) // s + 1
-        out = x_max.view(b, c_in, h_out, w_out)
-
-        return out
-
-class MyAvgPool2d(nn.Module):
     def __init__(self, output_size):
         super().__init__()
         self.output_size = output_size
