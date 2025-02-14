@@ -172,3 +172,4 @@ cython_debug/
 MNIST
 CIFAR10
 *.tar.gz
+*.swp

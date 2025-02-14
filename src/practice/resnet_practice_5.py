@@ -24,7 +24,11 @@ class Config:
     train_split : float = 0.9
 
 class MyResNet18(nn.Module):
-    def 
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x):
+        pass
     
 def train_test_model(config: Config):
     dataset = CIFAR10(
