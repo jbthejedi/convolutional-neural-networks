@@ -7,9 +7,6 @@ from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
 from dataclasses import dataclass
-
-from nn_modules import MyConv2d
-
 # from convolution2d import MyConv2d
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -26,14 +23,14 @@ class TrainingConfig:
 class BasicBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1):
         super().__init__()
-        self.conv1 = MyConv2d(
+        self.conv1 = nn.Conv2d(
             in_channels, out_channels,
             kernel_size=3, stride=stride, padding=1, bias=False
         )
         self.bn1 = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU()
         
-        self.conv2 = MyConv2d(
+        self.conv2 = nn.Conv2d(
             out_channels, out_channels,
             kernel_size=3, stride=1, padding=1, bias=False
         )
@@ -41,7 +38,7 @@ class BasicBlock(nn.Module):
 
         if stride != 1 or in_channels != out_channels:
             self.downsample = nn.Sequential(
-                MyConv2d(
+                nn.Conv2d(
                     in_channels, out_channels,
                     kernel_size=1, stride=stride, padding=0, bias=False
                 ),
@@ -79,7 +76,7 @@ class MyResNet18(nn.Module):
         avgpool -> fc
         """
         super().__init__()
-        self.conv1 = MyConv2d(
+        self.conv1 = nn.Conv2d(
             in_channels=3, out_channels=64,
             kernel_size=7, stride=2, padding=3
         )
@@ -115,7 +112,7 @@ class MyResNet18(nn.Module):
 
     def _initialize_weights(self):
         for m in self.modules():
-            if isinstance(m, MyConv2d):
+            if isinstance(m, nn.Conv2d):
                 # pass
                 # # Use Kaiming Normal initialization
                 # # for Conv2d layers.

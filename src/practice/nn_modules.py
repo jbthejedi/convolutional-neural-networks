@@ -6,7 +6,7 @@ import torch.nn.functional as F
 class MyConv2d(nn.Module):
     def __init__(self,
         in_channels, out_channels,
-        kernel_size, stride, padding
+        kernel_size, stride, padding, bias=False,
     ):
         super().__init__()
         self.in_channels = in_channels

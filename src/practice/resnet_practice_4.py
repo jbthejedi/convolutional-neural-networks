@@ -8,7 +8,8 @@ from torchvision.datasets import CIFAR10
 from tqdm import tqdm
 from dataclasses import dataclass
 
-from nn_modules import MyConv2d
+from nn_modules import MyConv2d, MyBatchNorm2d, MyMaxPool2d, MyAvgPool2d
+import matplotlib.pyplot as plt
 
 # from convolution2d import MyConv2d
 
@@ -30,14 +31,14 @@ class BasicBlock(nn.Module):
             in_channels, out_channels,
             kernel_size=3, stride=stride, padding=1, bias=False
         )
-        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.bn1 = MyBatchNorm2d(out_channels)
         self.relu = nn.ReLU()
         
         self.conv2 = MyConv2d(
             out_channels, out_channels,
             kernel_size=3, stride=1, padding=1, bias=False
         )
-        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.bn2 = MyBatchNorm2d(out_channels)
 
         if stride != 1 or in_channels != out_channels:
             self.downsample = nn.Sequential(
@@ -45,7 +46,7 @@ class BasicBlock(nn.Module):
                     in_channels, out_channels,
                     kernel_size=1, stride=stride, padding=0, bias=False
                 ),
-                nn.BatchNorm2d(out_channels)
+                MyBatchNorm2d(out_channels)
             )
         else:
             self.downsample = None
@@ -83,9 +84,9 @@ class MyResNet18(nn.Module):
             in_channels=3, out_channels=64,
             kernel_size=7, stride=2, padding=3
         )
-        self.bn1 = nn.BatchNorm2d(64)
+        self.bn1 = MyBatchNorm2d(64)
         self.relu = nn.ReLU()
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.maxpool = MyMaxPool2d(kernel_size=3, stride=2, padding=1)
 
         self.layer1 = self._make_layer(
             in_channels=64, out_channels=64, n_blocks=2, stride=1
@@ -100,7 +101,8 @@ class MyResNet18(nn.Module):
             in_channels=256, out_channels=512, n_blocks=2, stride=2
         )
 
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        # self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.avgpool = MyAvgPool2d((1, 1))
         self.fc = nn.Linear(512, num_classes)
 
         self._initialize_weights()
@@ -116,7 +118,7 @@ class MyResNet18(nn.Module):
     def _initialize_weights(self):
         for m in self.modules():
             if isinstance(m, MyConv2d):
-                # pass
+                pass
                 # # Use Kaiming Normal initialization
                 # # for Conv2d layers.
                 # nn.init.kaiming_normal_(
@@ -126,10 +128,11 @@ class MyResNet18(nn.Module):
                 # # (it might be None if bias=False), initialize it to zero.
                 # if m.bias is not None:
                 #     nn.init.zeros_(m.bias)
-                nn.init.normal_(m.weight, 0, 0.01)
-            if isinstance(m, nn.BatchNorm2d):
-                nn.init.ones_(m.weight)
-                nn.init.zeros_(m.bias)
+                # nn.init.normal_(m.weight, 0, 0.01)
+            if isinstance(m, MyBatchNorm2d):
+                pass
+                #nn.init.ones_(m.weight)
+                #nn.init.zeros_(m.bias)
             if isinstance(m, nn.Linear):
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.zeros_(m.bias)
@@ -187,6 +190,11 @@ def train_test_model(config : TrainingConfig):
             T.ToTensor(),
         ])
     )
+    import random
+    from torch.utils.data import Subset
+    indices = random.sample(range(len(dataset)), 1000)
+    dataset = Subset(dataset, indices)
+
     train_len = int(config.train_split * len(dataset))
     train, test = random_split(dataset, [train_len, len(dataset) - train_len])
     traindl = DataLoader(train, batch_size=config.batch_size, shuffle=True)
@@ -247,7 +255,7 @@ def train_test_model(config : TrainingConfig):
 
         tqdm.write(f"Train Loss: {avg_train_loss:.4f} | Train Acc: {train_accuracy:.2f}")
         tqdm.write(f"Val Loss: {avg_val_loss:.4f} | Val Acc: {val_accuracy:.2f}\n")
-    visualize_predictions(model, test_dl, num_images=10)
+    # visualize_predictions(model, testdl, num_images=10)
 
 def main():
     config = TrainingConfig()
