@@ -186,12 +186,12 @@ def train_test_model(config: Config):
                 inputs, labels = inputs.to(device), labels.to(device)
                 optimizer.zero_grad()
                 outputs = model(inputs)
-                loss = criterion(preds, labels)
+                loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
 
                 _, preds = torch.max(outputs, dim=1)
-                train_total_correct += (== labels).sum().item()
+                train_total_correct += (preds == labels).sum().item()
                 train_total_loss += loss.item()
                 train_total_size += labels.size(0)
 
